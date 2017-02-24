@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<title>Document</title>
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding:0;
+		}
+		#wrap{
+			width: 320px;
+			height: 480px;
+			background: url("images/game_bg.jpg") 0 0 no-repeat;
+			margin: 0 auto;
+			position: relative;
+		}
+		#gametime{
+			width: 180px;
+			height: 16px;
+			position: absolute;
+			left:63px;
+			top:66px;
+			overflow: hidden;
+		}
+		#wolf div{
+			position: absolute;
+			width: 108px;
+			height: 101px;
+			background-image: url("images/h.png");
+			display: none;
+		}
+		#wolf div:nth-child(1){
+			left: 95px;
+			top: 114px;
+		}
+		#wolf div:nth-child(2){
+			left:20px;
+			top:160px;
+		}
+		#wolf div:nth-child(3){
+			left:105px;
+			top: 192px;
+		}
+		#wolf div:nth-child(4){
+			left: 190px;
+			top: 142px;
+		}
+		#wolf div:nth-child(5){
+			left: 18px;
+			top: 221px;
+		}
+		#wolf div:nth-child(6){
+			left: 203px;
+			top: 212px;
+		}
+		#wolf div:nth-child(7){
+			left: 123px;
+			top: 274px;
+		}
+		#wolf div:nth-child(8){
+			left: 33px;
+			top: 294px;
+		}
+		#wolf div:nth-child(9){
+			left: 210px;
+			top: 296px;
+		}
+		
+		#score{
+			color: white;
+			position: absolute;
+			left: 65px;
+			top: 11px;
+		}
+	</style>
+</head>
+<body>
+	<div id="wrap">
+		<!-- 分数 -->
+		<div id="score">0</div>
+		<!-- 时间(进度) -->
+		<div id="gametime">
+			<img src="images/progress.png">
+		</div>
+
+		<!-- 狼坑 -->
+		<div id="wolf">
+			<!-- 9个坑 -->
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+	// 获得元素
+	var scoreDiv = document.getElementById("score");
+	var gametimeDiv = document.getElementById("gametime");
+	var wolfDiv = document.getElementById("wolf");
+
+	var wolfs = wolfDiv.getElementsByTagName("div");
+
+	// 游戏时间(秒)
+	var gameOverTime = 30;
+
+	// 数组
+	var arr = [];
+
+	// 游戏分数
+	var score = 0;
+
+
+	// 随机出现狼
+	var timer = setInterval(function(){
+		if(gameOverTime <= 0){
+			clearInterval(timer);
+		}else{	
+			// 得到随机狼的位置
+			var num = randomFn(0, wolfs.length);
+			// 解决得到随机数不重复-----------------------
+			while(arr.indexOf(num) > -1){
+				num = randomFn(0, wolfs.length);
+				// 判断数组arr填满了就清除所有(只保留最后一个)
+				if(arr.length == wolfs.length){
+					arr.splice(0, arr.length-1);
+				}
+			}
+			// console.log(num);
+			arr.push(num);
+			// -------------------------------------------
+
+			// 几率出现大灰狼或者小灰狼
+			if(Math.random() > 0.3){
+				wolfs[num].style.backgroundImage = "url(images/h.png)";
+				wolfs[num].name = "bigWolf";
+			}else{
+				wolfs[num].style.backgroundImage = "url(images/x.png)";
+				wolfs[num].name = "smallWolf";
+			}
+
+			// 调用狼动画函数
+			wolfMoveFn(wolfs[num]);
+
+			// 调用添加点击事件
+			wolfClickedFn(wolfs[num]);
+		}
+
+	// 时间要设置长点，保证出完一个狼再一个狼
+	}, 800);
+
+
+	// 添加点击事件
+	function wolfClickedFn(obj){
+		obj.onclick = function(){
+			// 判断计分
+			if(obj.name == "bigWolf"){
+				score += 10;
+			}else{
+				score -= 10;
+			}
+			scoreDiv.innerText = score;
+
+			// 改变index下标值
+			obj.index = 6;
+			// 改变点击状态
+			obj.clickBol = true;
+
+			// 只有一次点击
+			obj.onclick = null;
+		}
+	}
+
+
+	// 随机狼的位置
+	function randomFn(min, max){
+		return parseInt(Math.random()*(max - min)) + min;
+	}
+
+	// 狼出来并下去
+	function wolfMoveFn(obj){
+		clearInterval(obj.wolfMoveTimer);
+		// 显示div
+		obj.style.display = "block";
+		// 用来记录下标位置
+		obj.index = 0;
+		// true用来标识狼出来
+		obj.upBol = true;
+
+		// false用来标识狼未被点击
+		obj.clickBol = false;
+
+		obj.wolfMoveTimer = setInterval(function(){
+			// 判断狼是否还在出来中
+			if(obj.upBol || obj.clickBol == true){
+				obj.index++;
+			}else{
+				obj.index--;
+			}
+
+			// 判断下标位置出来完了就更改bol
+			if(obj.index >= 5){
+				obj.upBol = false;
+			}
+			// 判断下标为0就停止
+			if(obj.index < 0 || obj.index >= 9){
+				clearInterval(obj.wolfMoveTimer);
+				obj.style.display = "none";
+			}
+
+			obj.style.backgroundPosition = -obj.offsetWidth * obj.index + "px 0";
+		}, 100);
+	}
+
+	// 游戏时间倒计时
+	gameTimeFn();
+	function gameTimeFn(){
+		// 保存游戏时间
+		var t = gameOverTime;
+		// 进度条的长度
+		var w = gametimeDiv.offsetWidth;
+
+		var gameOverTimer = setInterval(function(){
+			// 判断时间结束
+			if(gameOverTime <= 0){
+				clearInterval(gameOverTimer);
+			}else{
+				// 计算时间比例
+				var scale = gameOverTime.toFixed(2) / t;
+				// 根据比例改变进度条
+				gametimeDiv.style.width = scale * w + "px";
+			}
+			gameOverTime-=0.02;
+		}, 20);
+	}
+
+
+</script>
+</html>
